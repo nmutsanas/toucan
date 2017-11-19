@@ -1,6 +1,6 @@
 // Hero
 function Hero(game, x, y) {
-    Phaser.Sprite.call(this, game, x, y, 'tucan', 'hop_0');
+    Phaser.Sprite.call(this, game, x, y, 'toucan', 'hop_0');
     this.anchor.set(0, 1);
     this.game.physics.enable(this);
     this.body.collideWorldBounds = true;
@@ -16,6 +16,9 @@ Hero.prototype = Object.create(Phaser.Sprite.prototype);
 Hero.prototype.constructor = Hero;
 
 Hero.prototype.move = function (direction) {
+    if (this.isFrozen) {
+        return;
+    }
     const SPEED = 200;
     this.body.velocity.x = direction * SPEED;
     if (this.body.velocity.x < 0) {
@@ -34,6 +37,12 @@ Hero.prototype.bounce = function () {
     const BOUNCE_SPEED = 200;
     this.body.velocity.y = -BOUNCE_SPEED;
 };
+
+Hero.prototype.freeze = function () {
+    this.body.enable = false;
+    this.isFrozen = true;
+};
+
 Hero.prototype.update = function () {
     let newAnimationDescriptor = this._getAnimationDescriptor();
     if (this.animations.name !== newAnimationDescriptor.name) {
@@ -120,12 +129,13 @@ PlayState.preload = function () {
     // font
     this.game.load.image('font:numbers', 'images/numbers.png');
     // sprites
-    this.game.load.atlas('tucan', 'images/tucan_atlas.png', 'images/tucan_atlas.json');
+    this.game.load.atlas('toucan', 'images/toucan_atlas.png', 'images/toucan_atlas.json');
     this.game.load.spritesheet('coin', 'images/coin_animated.png', 22, 22);
     this.game.load.spritesheet('monkey', 'images/monkey-run.png', 64, 52);
     this.game.load.spritesheet('door', 'images/door.png', 42, 66);
     this.game.load.spritesheet('icon:key', 'images/key_icon.png', 34, 30);
     this.game.load.spritesheet('fruit', 'images/fruitnveg32wh37.png', 32, 32);
+    this.game.load.spritesheet('decoration', 'images/decor.png', 42, 42);
     // audio
     this.game.load.audio('sfx:jump', 'audio/jump.wav');
     this.game.load.audio('sfx:wing', 'audio/wing.wav');
@@ -270,8 +280,17 @@ PlayState._onHeroVsKey = function (hero, key) {
 };
 
 PlayState._onHeroVsDoor = function (hero, door) {
-    this.sfx.door.play();
-    this.game.state.restart(true, false, {level: this.level + 1});
+    // 'open' the door by changing its graphic and playing a sfx
+    door.frame = 1;
+
+    // play 'enter door' animation and change to the next level when it ends
+    hero.freeze();
+    this.game.add.tween(hero)
+        .to({x: this.door.x, alpha: 0}, 500, null, true)
+        .onComplete.addOnce(function () {
+        this.game.state.restart(true, false, {level: this.level + 1});
+    }, this);
+    // this.game.state.restart(true, false, {level: this.level + 1});
 };
 
 PlayState._loadLevel = function (data) {
@@ -285,7 +304,11 @@ PlayState._loadLevel = function (data) {
     this.enemyWalls.visible = false;
 
     data.platforms.forEach(this._spawnPlatform, this);
-    data.coins.forEach(this._spawnCoin, this);
+    data.coins.forEach(this._spawnCoin, this); // spawn level decoration
+    data.decoration.forEach(function (deco) {
+        this.bgDecoration.add(
+            this.game.add.image(deco.x, deco.y, 'decoration', deco.frame));
+    }, this);
     this._spawnDoor(data.door.x, data.door.y);
     this.door.visible = false;
     this._spawnKey(data.key.x, data.key.y);
