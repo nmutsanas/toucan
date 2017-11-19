@@ -129,11 +129,11 @@ PlayState.preload = function () {
     // audio
     this.game.load.audio('sfx:jump', 'audio/jump.wav');
     this.game.load.audio('sfx:wing', 'audio/wing.wav');
-    this.game.load.audio('sfx:banana', 'audio/banana2.wav');
-    this.game.load.audio('sfx:coin', 'audio/coin2.wav');
+    this.game.load.audio('sfx:banana', 'audio/banana.wav');
+    this.game.load.audio('sfx:coin', 'audio/coin.wav');
     this.game.load.audio('sfx:stomp', 'audio/stomp.wav');
     this.game.load.audio('sfx:key', 'audio/key.wav');
-    this.game.load.audio('sfx:key_appears', 'audio/key_appears2.wav');
+    this.game.load.audio('sfx:key_appears', 'audio/key_appears.wav');
     this.game.load.audio('sfx:door', 'audio/door.wav');
     this.game.load.audio('bgm', ['audio/bgm.mp3', 'audio/bgm.ogg']);
 };
